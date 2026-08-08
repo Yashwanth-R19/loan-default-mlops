@@ -38,6 +38,8 @@ XGBoost was selected on ROC-AUC and registered in the MLflow Model Registry (`lo
 
 ![MLflow experiment comparison](docs/screenshots/mlflow-experiments.png)
 
+![MLflow run detail](docs/screenshots/mlflow-run-detail.png)
+
 See `reports/shap_summary.png` for feature-level explainability of the winning model:
 
 ![SHAP summary](reports/shap_summary.png)
@@ -141,6 +143,8 @@ pytest -v
 
 Covers config/preprocessing sanity checks, inference correctness and output bounds, the API's success + validation-error paths, and that the web UI is served at `/`.
 
+![Tests passing](docs/screenshots/pytest-passing.png)
+
 ## CI/CD
 
 Every push/PR runs a staged pipeline of three chained GitHub Actions workflows instead of one monolithic job:
@@ -152,6 +156,8 @@ Every push/PR runs a staged pipeline of three chained GitHub Actions workflows i
 A fourth, independent workflow, **[Deploy Docs](.github/workflows/pages.yml)**, publishes `docs/` to GitHub Pages whenever it changes on `main`.
 
 Because each stage only runs after the previous one succeeds, a broken build or a failing test stops the pipeline before an image is ever built.
+
+![GitHub Actions overview](docs/screenshots/gh-actions-overview.png)
 
 ## Model Hosting
 
@@ -176,22 +182,4 @@ Python 3.12 - pandas / scikit-learn / XGBoost - Optuna - SHAP - MLflow (tracking
 
 ## Screenshots
 
-Full-resolution images live in [`docs/screenshots/`](docs/screenshots/) — see [`docs/screenshots/README.md`](docs/screenshots/README.md) for exactly which filename each capture should use.
-
-### Required (submission minimum)
-
-- [x] GitHub repository link — [github.com/Yashwanth-R19/loan-default-mlops](https://github.com/Yashwanth-R19/loan-default-mlops)
-- [ ] Screenshot: MLflow experiments comparison — `docs/screenshots/mlflow-experiments.png`
-- [ ] Screenshot: registered model — `docs/screenshots/model-registry.png`
-- [ ] Screenshot: successful DVC tracking — `docs/screenshots/dvc-tracking.png`
-- [ ] Screenshot: successful GitHub Actions runs — `docs/screenshots/gh-actions-build.png`, `gh-actions-test.png`, `gh-actions-docker-build.png`
-- [ ] Screenshot: FastAPI prediction endpoint — `docs/screenshots/fastapi-docs-swagger.png`
-
-### Recommended
-
-- [ ] Screenshot: prediction UI, blank form — `docs/screenshots/prediction-ui-empty.png`
-- [ ] Screenshot: prediction UI, with result — `docs/screenshots/prediction-ui-result.png`
-- [ ] Screenshot: Docker container running — `docs/screenshots/docker-running.png`
-- [ ] Screenshot: DVC pipeline DAG (`dvc dag`) — `docs/screenshots/dvc-dag.png`
-- [ ] Screenshot: Hugging Face model page — `docs/screenshots/huggingface-model.png`
-- [ ] Screenshot: GitHub Pages documentation site — `docs/screenshots/github-pages-site.png`
+Full-resolution images live in [`docs/screenshots/`](docs/screenshots/)

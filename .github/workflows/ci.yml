@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test:
+    name: Build -> Test -> Docker Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure DVC remote credentials
+        run: |
+          dvc remote modify origin --local auth basic
+          dvc remote modify origin --local user "${{ secrets.DAGSHUB_USERNAME }}"
+          dvc remote modify origin --local password "${{ secrets.DAGSHUB_TOKEN }}"
+
+      - name: Pull trained model from DVC remote (DagsHub)
+        run: dvc pull models/model.pkl
+
+      - name: Run tests
+        run: pytest -v
+
+      - name: Build Docker image
+        run: docker build --load -t loan-default-mlops:${{ github.sha }} .

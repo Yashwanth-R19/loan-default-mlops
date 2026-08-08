@@ -1,0 +1,31 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python -m src.data_prep
+    deps:
+    - path: data/raw/Loan_default.csv
+      hash: md5
+      md5: 5f5a3364753b86ef3472cba30af224ce
+      size: 24834870
+    - path: src/data_prep.py
+      hash: md5
+      md5: 5057c4998c5d9dbd539a59704edf1a3c
+      size: 1656
+    - path: src/utils.py
+      hash: md5
+      md5: a77cd20935a4dd1a3fdfbfb448dfcc8e
+      size: 1088
+    params:
+      params.yaml:
+        data.subsample_size: 50000
+        data.test_size: 0.2
+        random_state: 42
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 3278f600c8b5873854e47469ab150ffe
+      size: 982717
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 688c3e672152cd9c8829eb89712e3463
+      size: 3931313

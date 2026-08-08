@@ -1,0 +1,14 @@
+stages:
+  prepare:
+    cmd: python -m src.data_prep
+    deps:
+      - data/raw/Loan_default.csv
+      - src/data_prep.py
+      - src/utils.py
+    params:
+      - random_state
+      - data.subsample_size
+      - data.test_size
+    outs:
+      - data/processed/train.csv
+      - data/processed/test.csv

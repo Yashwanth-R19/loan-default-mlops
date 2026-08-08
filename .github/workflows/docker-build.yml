@@ -1,17 +1,21 @@
-name: CI
+name: Docker Build
 
 on:
-  push:
-  pull_request:
+  workflow_run:
+    workflows: ["Test"]
+    types: [completed]
 
 jobs:
-  build-test:
-    name: Build -> Test -> Docker Build
+  docker-build:
+    name: Build Docker image
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -19,8 +23,8 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Install dvc
+        run: pip install dvc
 
       - name: Configure DVC remote credentials
         run: |
@@ -31,8 +35,5 @@ jobs:
       - name: Pull trained model from DVC remote (DagsHub)
         run: dvc pull models/model.pkl
 
-      - name: Run tests
-        run: pytest -v
-
       - name: Build Docker image
-        run: docker build --load -t loan-default-mlops:${{ github.sha }} .
+        run: docker build --load -t loan-default-mlops:${{ github.event.workflow_run.head_sha }} .

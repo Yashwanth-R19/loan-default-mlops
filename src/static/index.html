@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loan Default Predictor</title>
+<style>
+  :root {
+    --bg: #F5F2EA;
+    --surface: #FCFBF7;
+    --surface-raised: #FFFFFF;
+    --border: #E3DDCF;
+    --text: #2B2820;
+    --text-muted: #7A7264;
+    --accent: #C15F3C;
+    --accent-hover: #A94F30;
+    --accent-soft: #F1E3DB;
+    --low: #4B7B5A;
+    --low-bg: #E7F0E8;
+    --medium: #B07A2E;
+    --medium-bg: #F5EBD8;
+    --high: #B0442E;
+    --high-bg: #F5E1DB;
+    --ok: #4B7B5A;
+    --err: #B0442E;
+    --radius: 14px;
+    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #191712;
+      --surface: #211E18;
+      --surface-raised: #26231C;
+      --border: #38342A;
+      --text: #EDE9DD;
+      --text-muted: #9A9284;
+      --accent: #E08561;
+      --accent-hover: #EC9A79;
+      --accent-soft: #3A2A22;
+      --low: #7FBE8F;
+      --low-bg: #1F2B22;
+      --medium: #D9AE64;
+      --medium-bg: #332918;
+      --high: #E08170;
+      --high-bg: #35211D;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    font-family: var(--serif);
+    font-size: 20px;
+    letter-spacing: 0.01em;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+  }
+  .dot.ok { background: var(--ok); }
+  .dot.err { background: var(--err); }
+
+  main {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+
+  .intro { max-width: 640px; margin-bottom: 40px; }
+  .intro h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 32px;
+    margin: 0 0 12px;
+  }
+  .intro p {
+    color: var(--text-muted);
+    font-size: 15px;
+    margin: 0;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+
+  .card h2 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 18px;
+    margin: 0 0 20px;
+  }
+
+  .fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 14px;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.wide { grid-column: 1 / -1; }
+
+  label {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  input, select {
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 11px;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  .actions {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  button {
+    font-family: var(--sans);
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 999px;
+    padding: 11px 26px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  button:hover { background: var(--accent-hover); }
+  button:disabled { opacity: 0.6; cursor: default; }
+
+  .form-error {
+    font-size: 13px;
+    color: var(--err);
+    display: none;
+  }
+
+  .result-card { position: sticky; top: 28px; }
+
+  .placeholder {
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .result { display: none; }
+
+  .decision {
+    font-family: var(--serif);
+    font-size: 22px;
+    margin: 0 0 6px;
+  }
+
+  .risk-pill {
+    display: inline-block;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+  }
+  .risk-pill.Low { color: var(--low); background: var(--low-bg); }
+  .risk-pill.Medium { color: var(--medium); background: var(--medium-bg); }
+  .risk-pill.High { color: var(--high); background: var(--high-bg); }
+
+  .metric { margin-bottom: 16px; }
+  .metric .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .metric .value { font-size: 15px; font-weight: 600; }
+
+  .prob-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--border);
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .prob-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+
+  .disclaimer {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  footer {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 0 32px 40px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  footer a { color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Loan Default Predictor</div>
+  <div class="status">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText">Checking API&hellip;</span>
+  </div>
+</header>
+
+<main>
+  <div class="intro">
+    <h1>Estimate loan default risk</h1>
+    <p>Enter an applicant's financial profile below. The request is sent directly to this service's
+      <code>/predict</code> endpoint, which runs the registered XGBoost pipeline and returns a
+      probability of default.</p>
+  </div>
+
+  <div class="layout">
+    <div class="card">
+      <h2>Applicant details</h2>
+      <form id="predictForm">
+        <div class="fields">
+          <div class="field">
+            <label for="Age">Age</label>
+            <input type="number" id="Age" min="18" max="100" step="1" value="35" required>
+          </div>
+          <div class="field">
+            <label for="Income">Annual income ($)</label>
+            <input type="number" id="Income" min="0" step="1" value="65000" required>
+          </div>
+          <div class="field">
+            <label for="LoanAmount">Loan amount ($)</label>
+            <input type="number" id="LoanAmount" min="0" step="1" value="15000" required>
+          </div>
+          <div class="field">
+            <label for="CreditScore">Credit score</label>
+            <input type="number" id="CreditScore" min="300" max="850" step="1" value="680" required>
+          </div>
+          <div class="field">
+            <label for="MonthsEmployed">Months employed</label>
+            <input type="number" id="MonthsEmployed" min="0" step="1" value="48" required>
+          </div>
+          <div class="field">
+            <label for="NumCreditLines">Open credit lines</label>
+            <input type="number" id="NumCreditLines" min="0" step="1" value="3" required>
+          </div>
+          <div class="field">
+            <label for="InterestRate">Interest rate (%)</label>
+            <input type="number" id="InterestRate" min="0" max="50" step="0.01" value="12.5" required>
+          </div>
+          <div class="field">
+            <label for="LoanTerm">Loan term (months)</label>
+            <input type="number" id="LoanTerm" min="1" step="1" value="36" required>
+          </div>
+          <div class="field">
+            <label for="DTIRatio">Debt-to-income ratio</label>
+            <input type="number" id="DTIRatio" min="0" max="1" step="0.01" value="0.35" required>
+          </div>
+          <div class="field">
+            <label for="Education">Education</label>
+            <select id="Education">
+              <option>High School</option>
+              <option selected>Bachelor's</option>
+              <option>Master's</option>
+              <option>PhD</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="EmploymentType">Employment type</label>
+            <select id="EmploymentType">
+              <option selected>Full-time</option>
+              <option>Part-time</option>
+              <option>Self-employed</option>
+              <option>Unemployed</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="MaritalStatus">Marital status</label>
+            <select id="MaritalStatus">
+              <option>Single</option>
+              <option selected>Married</option>
+              <option>Divorced</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="LoanPurpose">Loan purpose</label>
+            <select id="LoanPurpose">
+              <option selected>Auto</option>
+              <option>Business</option>
+              <option>Education</option>
+              <option>Home</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="HasMortgage">Has mortgage</label>
+            <select id="HasMortgage">
+              <option selected>Yes</option>
+              <option>No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="HasDependents">Has dependents</label>
+            <select id="HasDependents">
+              <option>Yes</option>
+              <option selected>No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="HasCoSigner">Has co-signer</label>
+            <select id="HasCoSigner">
+              <option>Yes</option>
+              <option selected>No</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" id="submitBtn">Get prediction</button>
+          <span class="form-error" id="formError">Something went wrong. Check the values and try again.</span>
+        </div>
+      </form>
+    </div>
+
+    <div class="card result-card">
+      <h2>Prediction</h2>
+      <p class="placeholder" id="placeholder">Fill in the applicant's details and submit the form to see a prediction here.</p>
+
+      <div class="result" id="result">
+        <div class="decision" id="decisionText"></div>
+        <span class="risk-pill" id="riskPill"></span>
+
+        <div class="metric">
+          <div class="label">Default probability</div>
+          <div class="value" id="probValue"></div>
+          <div class="prob-bar"><div class="prob-bar-fill" id="probBar"></div></div>
+        </div>
+
+        <div class="disclaimer">
+          Output of an XGBoost classifier trained on historical loan data, tracked with MLflow and
+          registered in the model registry. For demonstration purposes only &mdash; not a real
+          lending decision.
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Built with FastAPI, XGBoost, MLflow, and DVC &middot;
+  <a href="/docs">API reference</a>
+</footer>
+
+<script>
+  const fieldIds = [
+    "Age", "Income", "LoanAmount", "CreditScore", "MonthsEmployed",
+    "NumCreditLines", "InterestRate", "LoanTerm", "DTIRatio",
+    "Education", "EmploymentType", "MaritalStatus", "HasMortgage",
+    "HasDependents", "LoanPurpose", "HasCoSigner"
+  ];
+  const intFields = new Set(["Age", "Income", "LoanAmount", "CreditScore", "MonthsEmployed", "NumCreditLines", "LoanTerm"]);
+  const floatFields = new Set(["InterestRate", "DTIRatio"]);
+
+  async function checkHealth() {
+    const dot = document.getElementById("statusDot");
+    const text = document.getElementById("statusText");
+    try {
+      const res = await fetch("/health");
+      if (res.ok) {
+        dot.className = "dot ok";
+        text.textContent = "API online";
+      } else {
+        throw new Error("unhealthy");
+      }
+    } catch (e) {
+      dot.className = "dot err";
+      text.textContent = "API unreachable";
+    }
+  }
+
+  function collectPayload() {
+    const payload = {};
+    for (const id of fieldIds) {
+      const el = document.getElementById(id);
+      if (intFields.has(id)) {
+        payload[id] = parseInt(el.value, 10);
+      } else if (floatFields.has(id)) {
+        payload[id] = parseFloat(el.value);
+      } else {
+        payload[id] = el.value;
+      }
+    }
+    return payload;
+  }
+
+  function renderResult(data) {
+    document.getElementById("placeholder").style.display = "none";
+    const result = document.getElementById("result");
+    result.style.display = "block";
+
+    const decision = document.getElementById("decisionText");
+    decision.textContent = data.prediction === 1 ? "Likely to default" : "Not likely to default";
+
+    const pill = document.getElementById("riskPill");
+    pill.textContent = data.risk_label + " risk";
+    pill.className = "risk-pill " + data.risk_label;
+
+    const pct = (data.default_probability * 100).toFixed(2);
+    document.getElementById("probValue").textContent = pct + "%";
+    document.getElementById("probBar").style.width = pct + "%";
+  }
+
+  document.getElementById("predictForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("submitBtn");
+    const errorEl = document.getElementById("formError");
+    errorEl.style.display = "none";
+    btn.disabled = true;
+    btn.textContent = "Predicting…";
+
+    try {
+      const res = await fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(collectPayload()),
+      });
+      if (!res.ok) {
+        throw new Error("Request failed with status " + res.status);
+      }
+      const data = await res.json();
+      renderResult(data);
+    } catch (err) {
+      errorEl.style.display = "inline";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Get prediction";
+    }
+  });
+
+  checkHealth();
+</script>
+
+</body>
+</html>

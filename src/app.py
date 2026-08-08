@@ -3,9 +3,13 @@ from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.predict import load_model, predict_one
+from src.utils import PROJECT_ROOT
+
+STATIC_DIR = PROJECT_ROOT / "src" / "static"
 
 
 @asynccontextmanager
@@ -69,6 +73,11 @@ class PredictionResponse(BaseModel):
     prediction: int = Field(..., description="1 = predicted default, 0 = predicted no default")
     default_probability: float = Field(..., description="Model's predicted probability of default")
     risk_label: str = Field(..., description="Low / Medium / High risk bucket")
+
+
+@app.get("/", include_in_schema=False)
+def index() -> FileResponse:
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/health")

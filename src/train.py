@@ -17,6 +17,7 @@ import optuna
 import pandas as pd
 import shap
 from dotenv import load_dotenv
+from huggingface_hub import HfApi
 from mlflow.tracking import MlflowClient
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -132,6 +133,79 @@ def tune_model(model_name, X_train, y_train, scale_pos_weight, n_trials, cv_fold
     return study.best_params, study.best_value
 
 
+def push_to_hub(model_path, all_metrics: dict, best_model_name: str) -> None:
+    """Mirrors the winning pipeline to a Hugging Face Hub model repo, as a
+    second, publicly browsable home for the model alongside the MLflow
+    Model Registry. Best-effort: silently skipped if credentials aren't set,
+    so training and CI never depend on a Hugging Face account existing."""
+    hf_token = os.environ.get("HF_TOKEN")
+    hf_repo_id = os.environ.get("HF_REPO_ID")
+    if not hf_token or not hf_repo_id:
+        print("HF_TOKEN / HF_REPO_ID not set - skipping Hugging Face Hub push")
+        return
+
+    api = HfApi(token=hf_token)
+    api.create_repo(repo_id=hf_repo_id, repo_type="model", exist_ok=True)
+    api.upload_file(
+        path_or_fileobj=str(model_path),
+        path_in_repo="model.pkl",
+        repo_id=hf_repo_id,
+        repo_type="model",
+    )
+
+    metrics_rows = "\n".join(
+        f"| {name} | {m['accuracy']:.3f} | {m['precision']:.3f} | {m['recall']:.3f} | "
+        f"{m['f1']:.3f} | {m['roc_auc']:.3f} | {m['pr_auc']:.3f} |"
+        for name, m in all_metrics.items()
+        if name != "best_model"
+    )
+    model_card = f"""---
+tags:
+- tabular-classification
+- xgboost
+- scikit-learn
+- loan-default
+---
+
+# Loan Default Classifier
+
+Binary classifier predicting whether a loan applicant will default, mirrored here from the
+MLflow Model Registry of the source project (`{MODEL_REGISTRY_NAME}`, best model: **{best_model_name}**).
+
+## Test set performance
+
+| Model | Accuracy | Precision | Recall | F1 | ROC-AUC | PR-AUC |
+|---|---|---|---|---|---|---|
+{metrics_rows}
+
+## Usage
+
+`model.pkl` is a scikit-learn `Pipeline` (preprocessing + classifier) saved with `joblib`. It expects
+a single-row DataFrame with these raw feature columns:
+
+`{", ".join(FEATURE_COLUMNS)}`
+
+```python
+import joblib
+import pandas as pd
+
+pipeline = joblib.load("model.pkl")
+row = pd.DataFrame([{{...}}], columns={FEATURE_COLUMNS!r})
+probability = pipeline.predict_proba(row)[0, 1]
+```
+
+Trained as part of an end-to-end MLOps pipeline (DVC + MLflow + FastAPI + Docker + GitHub Actions).
+Source repository: https://github.com/Yashwanth-R19/loan-default-mlops
+"""
+    api.upload_file(
+        path_or_fileobj=model_card.encode(),
+        path_in_repo="README.md",
+        repo_id=hf_repo_id,
+        repo_type="model",
+    )
+    print(f"Pushed model to https://huggingface.co/{hf_repo_id}")
+
+
 def main() -> None:
     params = load_params()
     random_state = params["random_state"]
@@ -205,6 +279,8 @@ def main() -> None:
     all_metrics["best_model"] = best_result["model_name"]
     with open(METRICS_PATH, "w") as f:
         json.dump(all_metrics, f, indent=2)
+
+    push_to_hub(MODEL_PATH, all_metrics, best_result["model_name"])
 
     # SHAP summary plot for the best model
     best_pipeline = best_result["pipeline"]

@@ -16,6 +16,7 @@ Dataset -> DVC Versioning -> Training Script -> MLflow Tracking -> Best Model
         -> Model Registry -> Hugging Face Hub -> FastAPI + Web UI -> Docker Container
         -> GitHub Repository -> GitHub Actions (Build -> Test -> Docker Build)
 ```
+![MLOps Pipeline](docs/screenshots/pipeline.png)
 
 ## Dataset
 
@@ -40,9 +41,9 @@ XGBoost was selected on ROC-AUC and registered in the MLflow Model Registry (`lo
 
 ![MLflow run detail](docs/screenshots/mlflow-run-detail.png)
 
-See `reports/shap_summary.png` for feature-level explainability of the winning model:
+See the SHAP feature-importance plot for the winning model:
 
-![SHAP summary](reports/shap_summary.png)
+![SHAP feature importance](reports/shap_summary.png)
 
 ## Web UI
 

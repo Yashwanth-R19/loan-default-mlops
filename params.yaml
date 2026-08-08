@@ -5,3 +5,8 @@ data:
   test_size: 0.2           # fraction of the subsample held out for testing
   target_col: Default
   id_col: LoanID
+
+training:
+  n_trials: 25             # Optuna trials per model (75 total across 3 models)
+  cv_folds: 3               # stratified CV folds used inside each Optuna trial
+  primary_metric: roc_auc   # must be a valid sklearn scorer name; used to pick the best model

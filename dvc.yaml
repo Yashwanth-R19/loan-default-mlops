@@ -12,3 +12,22 @@ stages:
     outs:
       - data/processed/train.csv
       - data/processed/test.csv
+
+  train:
+    cmd: python -m src.train
+    deps:
+      - data/processed/train.csv
+      - data/processed/test.csv
+      - src/train.py
+      - src/utils.py
+    params:
+      - random_state
+      - training.n_trials
+      - training.cv_folds
+      - training.primary_metric
+    outs:
+      - models/model.pkl
+      - reports/shap_summary.png
+    metrics:
+      - reports/metrics.json:
+          cache: false

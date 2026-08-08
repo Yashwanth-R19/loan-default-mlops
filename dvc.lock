@@ -13,8 +13,8 @@ stages:
       size: 1656
     - path: src/utils.py
       hash: md5
-      md5: a77cd20935a4dd1a3fdfbfb448dfcc8e
-      size: 1088
+      md5: 1fc17a0658452b30f07092c6921d1afd
+      size: 2037
     params:
       params.yaml:
         data.subsample_size: 50000
@@ -29,3 +29,41 @@ stages:
       hash: md5
       md5: 688c3e672152cd9c8829eb89712e3463
       size: 3931313
+  train:
+    cmd: python -m src.train
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 3278f600c8b5873854e47469ab150ffe
+      size: 982717
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 688c3e672152cd9c8829eb89712e3463
+      size: 3931313
+    - path: src/train.py
+      hash: md5
+      md5: 429b5153a8d093c750fc0cc09e525dc5
+      size: 9057
+    - path: src/utils.py
+      hash: md5
+      md5: 1fc17a0658452b30f07092c6921d1afd
+      size: 2037
+    params:
+      params.yaml:
+        random_state: 42
+        training.cv_folds: 3
+        training.n_trials: 25
+        training.primary_metric: roc_auc
+    outs:
+    - path: models/model.pkl
+      hash: md5
+      md5: 2e82c8e21e29548be695ef954cf021ee
+      size: 472594
+    - path: reports/metrics.json
+      hash: md5
+      md5: 08a5daf31cd2a2db5c7a05865bd8e6d0
+      size: 712
+    - path: reports/shap_summary.png
+      hash: md5
+      md5: d4df863cd8c4d9cc8a2a636a17eab5f1
+      size: 189053
